@@ -1,0 +1,55 @@
+<section class="card {{ card.span }}" data-widget-id="{{ card.id }}">
+    <h2>
+        <span class="drag-handle" title="Drag to reorder">::</span>
+        <span class="card-title">{{ card.title }}</span>
+        <button type="button" class="card-delete" data-remove-card aria-label="Remove card" title="Remove card">&times;</button>
+    </h2>
+    {% if card.type == 'weather' %}
+        <form
+            class="weather-search"
+            method="post"
+            hx-post="{% url 'weather-widget' %}"
+            hx-target="#weather-widget-body-{{ card.instance_id }}"
+            hx-swap="innerHTML"
+        >
+            {% csrf_token %}
+            <input type="text" name="city" placeholder="Type a city (e.g. Tokyo)" autocomplete="off">
+            <button type="submit">Fetch Weather</button>
+        </form>
+        <div id="weather-widget-body-{{ card.instance_id }}" class="widget-body">
+            {% include 'main/partials/weather_result.html' %}
+        </div>
+
+    {% elif card.type == 'stats' %}
+        <p class="widget-note">{{ card.note }}</p>
+        <div
+            id="stats-widget-body-{{ card.instance_id }}"
+            class="widget-body"
+            hx-get="{% url 'stats-widget' %}"
+            hx-trigger="load, every 20s"
+            hx-swap="innerHTML"
+        >
+            {% include 'main/partials/cards/stats.html' %}
+        </div>
+
+    {% elif card.type == 'recent' %}
+        <p class="widget-note">{{ card.note }}</p>
+        <div
+            id="recent-widget-body-{{ card.instance_id }}"
+            class="widget-body"
+            hx-get="{% url 'recent-widget' %}"
+            hx-trigger="load, every 30s"
+            hx-swap="innerHTML"
+        >
+            {% include 'main/partials/cards/recent.html' %}
+        </div>
+
+    {% elif card.type == 'help' %}
+        {% for step in card.steps %}
+            <p class="widget-note">{{ forloop.counter }}. {{ step }}</p>
+        {% endfor %}
+
+    {% elif card.type == 'graph' %}
+        {% include 'main/partials/cards/graph.html' with card=card graph_metrics=graph_metrics %}
+    {% endif %}
+</section>

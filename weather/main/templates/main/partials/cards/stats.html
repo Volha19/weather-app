@@ -1,0 +1,14 @@
+<div style="display: grid; gap: .5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
+        <span>Total Searches</span>
+        <strong>{{ stats.search_count }}</strong>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
+        <span>Average Temp</span>
+        <strong>{% if stats.avg_temp %}{{ stats.avg_temp|floatformat:1 }}&deg;C{% else %}N/A{% endif %}</strong>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
+        <span>Latest City</span>
+        <strong>{% if stats.latest_city %}{{ stats.latest_city }}{% else %}N/A{% endif %}</strong>
+    </div>
+</div>

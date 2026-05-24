@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Board</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'main/css/board.css' %}">
+</head>
+<body>
+    <div class="container">
+        <header class="hero hero-bar">
+            <h1>Weather Board</h1>
+            <form class="hero-controls" onsubmit="return false;">
+                <label class="sr-only" for="card-type-select">Select card type</label>
+                <select id="card-type-select" name="card_type" aria-label="Select card type to add">
+                    {% for option in card_type_options %}
+                        <option value="{{ option.value }}">{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+                <button
+                    type="button"
+                    hx-get="{% url 'card-add' %}"
+                    hx-include="#card-type-select"
+                    hx-target="#widget-board"
+                    hx-swap="beforeend">
+                    Add Card
+                </button>
+            </form>
+        </header>
+
+        <main class="board sortable" id="widget-board" hx-ext="sortable">
+            {% for card in cards %}
+                {% include 'main/partials/card_section.html' with card=card graph_metrics=graph_metrics %}
+            {% endfor %}
+        </main>
+    </div>
+
+    <script src="{% static 'main/js/board.js' %}"></script>
+</body>
+</html>

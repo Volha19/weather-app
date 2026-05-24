@@ -1,0 +1,14 @@
+# Environment files
+.env
+weather/.env
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Django / local state
+weather/db.sqlite3
+db.sqlite3
+.venv/
+venv/

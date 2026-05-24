@@ -1,0 +1,13 @@
+{% if recent_searches %}
+<div style="display: grid; gap: .5rem;">
+    {% for search in recent_searches %}
+        <div style="border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .58rem .72rem; background: rgba(255, 255, 255, 0.7);">
+            <strong>{{ search.city_name }}</strong>
+            <span style="color: #6b7a87;">{{ search.searched_at|date:'H:i d M' }}</span>
+            <div style="margin-top: .2rem; color: #24455a;">{{ search.temperature }}&deg;C - {{ search.description }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="widget-note">No searches yet. The list will appear after your first request.</p>
+{% endif %}

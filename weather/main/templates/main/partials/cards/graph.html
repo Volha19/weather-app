@@ -1,0 +1,45 @@
+{% if fragment_only %}
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% else %}
+        {% if helper_text %}
+            <p class="widget-note">{{ helper_text }}</p>
+        {% else %}
+            <p class="widget-note">Enter a city and fetch the 5-day forecast to see max and min lines for the selected metric.</p>
+        {% endif %}
+        <div
+            id="graph-data-{{ card_instance_id }}"
+            class="graph-data"
+            data-labels='{{ forecast_labels_json|escape }}'
+            data-max='{{ forecast_max_json|escape }}'
+            data-min='{{ forecast_min_json|escape }}'
+            data-metric-label='{{ metric_label|escape }}'
+            data-metric-unit='{{ metric_unit|escape }}'
+            style="position: relative; height: 300px; width: 100%;"
+        >
+            <canvas id="weatherChart-{{ card_instance_id }}" class="weather-chart"></canvas>
+        </div>
+    {% endif %}
+{% else %}
+    <p class="widget-note">Graph for <span id="graph-city-label-{{ card.instance_id }}">your selected city</span>.</p>
+    <form
+        class="weather-search"
+        method="post"
+        hx-post="{% url 'graph-widget' %}"
+        hx-target="#graph-widget-body-{{ card.instance_id }}"
+        hx-swap="innerHTML"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="card_instance_id" value="{{ card.instance_id }}">
+        <input type="text" name="city" placeholder="Type a city (e.g. Tokyo)" autocomplete="off">
+        <select name="metric" aria-label="Select data to graph">
+            {% for option in graph_metrics %}
+                <option value="{{ option.value }}" {% if option.value == 'temperature' %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Fetch Weather</button>
+    </form>
+    <div id="graph-widget-body-{{ card.instance_id }}" class="widget-body">
+        {% include 'main/partials/cards/graph.html' with fragment_only=True card_instance_id=card.instance_id %}
+    </div>
+{% endif %}
