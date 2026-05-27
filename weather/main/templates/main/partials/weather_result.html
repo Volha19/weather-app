@@ -6,10 +6,10 @@
             <h3 style="margin: 0; font-family: 'Syne', 'Segoe UI', sans-serif; font-size: 1.22rem;">{{ weather.city }}</h3>
             <p style="margin: .25rem 0; color: #2d556f;">{{ weather.description }}</p>
             <p style="margin: .2rem 0;">Temperature: <strong>{{ weather.temperature }}&deg;C</strong></p>
-            <p style="margin: .2rem 0;">Humidity: {{ weather.humidity }}% | Pressure: {{ weather.pressure }} hPa</p>
+            <p style="margin: .2rem 0;">Humidity: {{ weather.humidity }}% · Pressure: {{ weather.pressure }} hPa</p>
         </div>
         <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather icon" width="90" height="90" loading="lazy">
     </div>
 {% else %}
-    <p class="widget-note">No weather selected yet. Search for a city to fill this card.</p>
+    <p class="widget-note">Search for a city to see the current weather here.</p>
 {% endif %}

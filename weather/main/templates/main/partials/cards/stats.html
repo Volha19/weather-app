@@ -1,14 +1,25 @@
 <div style="display: grid; gap: .5rem;">
     <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
-        <span>Total Searches</span>
+        <span>Total searches</span>
         <strong>{{ stats.search_count }}</strong>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
-        <span>Average Temp</span>
-        <strong>{% if stats.avg_temp %}{{ stats.avg_temp|floatformat:1 }}&deg;C{% else %}N/A{% endif %}</strong>
+        <span>Top city</span>
+        <strong>{% if stats.most_common_city %}{{ stats.most_common_city }} ({{ stats.most_common_city_count }}){% else %}—{% endif %}</strong>
     </div>
     <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
-        <span>Latest City</span>
-        <strong>{% if stats.latest_city %}{{ stats.latest_city }}{% else %}N/A{% endif %}</strong>
+        <span>Unique cities</span>
+        <strong>{{ stats.unique_city_count }}</strong>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .6rem .72rem; background: rgba(255, 255, 255, 0.72);">
+        <span>Latest search</span>
+        <strong style="text-align: right;">
+            {% if stats.latest_city %}
+                {{ stats.latest_city }}<br>
+                <small style="color: var(--muted); font-weight: 500;">{% if stats.latest_search_time %}{{ stats.latest_search_time|date:"M d, H:i" }}{% else %}—{% endif %}</small>
+            {% else %}
+                N/A
+            {% endif %}
+        </strong>
     </div>
 </div>

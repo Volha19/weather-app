@@ -1,10 +1,15 @@
 from django.shortcuts import render
-from django.db.models import Avg
+from django.db.models import Count
 from django.conf import settings
+from django.http import HttpResponse, HttpResponseServerError, StreamingHttpResponse
+from django.views.decorators.http import require_GET
+from django.views.decorators.cache import cache_page
 from .models import SearchHistory
 import json
 from uuid import uuid4
 from .weather_service import WeatherService, WeatherServiceError
+from .alerts_service import AlertsService, AlertsServiceError
+import requests
 
 
 GRAPH_METRICS = [
@@ -18,34 +23,45 @@ GRAPH_METRICS = [
 
 CARD_TYPES = {
     'weather': {
-        'title': 'Weather Widget',
-        'span': 'span-8',
+        'title': 'Current Weather',
+        'span': 'span-6',
         'body_template': 'main/partials/cards/weather.html',
     },
+    'map': {
+        'title': 'Weather Map',
+        'span': 'span-12',
+        'body_template': 'main/partials/cards/weather.html',
+    },
+    'alerts': {
+        'title': 'Alerts (Europe/CIS)',
+        'span': 'span-6',
+        'note': 'Free disaster alerts feed for Europe and CIS countries.',
+        'body_template': 'main/partials/cards/alerts.html',
+    },
     'stats': {
-        'title': 'Today Snapshot',
-        'span': 'span-4',
-        'note': 'Auto-refresh every 20 seconds.',
+        'title': 'Today at a Glance',
+        'span': 'span-6',
+        'note': 'Updates after each search.',
         'body_template': 'main/partials/cards/stats.html',
     },
     'recent': {
-        'title': 'Recent Searches',
+        'title': 'Recent Cities',
         'span': 'span-6',
-        'note': 'Latest requests from your database.',
+        'note': 'Refreshes after each successful search.',
         'body_template': 'main/partials/cards/recent.html',
     },
     'help': {
-        'title': 'How To Use',
+        'title': 'Quick Tips',
         'span': 'span-6',
         'steps': [
-            'Enter a city and fetch weather.',
-            'Watch recent and stats cards refresh.',
-            'Keep this page open as your mini weather board.',
+            'Type a city and get the latest weather.',
+            'Recent cities update after a successful search.',
+            'Keep this dashboard open for a quick weather check.',
         ],
         'body_template': 'main/partials/cards/help.html',
     },
     'graph': {
-        'title': 'Graph of Weather Data',
+        'title': 'Weather Trends',
         'span': 'span-6',
         'body_template': 'main/partials/cards/graph.html',
     },
@@ -78,9 +94,30 @@ def build_card_types_for_picker():
     ]
 
 
+def build_stats_context():
+    recent_searches = SearchHistory.objects.order_by('-searched_at')
+    most_common_city = (
+        SearchHistory.objects.values('city_name')
+        .annotate(total=Count('id'))
+        .order_by('-total', 'city_name')
+        .first()
+    )
+
+    return {
+        'search_count': SearchHistory.objects.count(),
+        'most_common_city': most_common_city['city_name'] if most_common_city else None,
+        'most_common_city_count': most_common_city['total'] if most_common_city else 0,
+        'unique_city_count': SearchHistory.objects.values('city_name').distinct().count(),
+        'latest_city': recent_searches[0].city_name if recent_searches else None,
+        'latest_search_time': recent_searches[0].searched_at if recent_searches else None,
+    }
+
+
 def build_cards_config():
     return [
         build_card('weather', 'weather-main'),
+        build_card('map', 'map-main'),
+        build_card('alerts', 'alerts-main'),
         build_card('stats', 'stats-main'),
         build_card('recent', 'recent-main'),
         build_card('help', 'help-main'),
@@ -89,7 +126,6 @@ def build_cards_config():
 
 
 def fetch_weather_for_city(city):
-    """Return tuple (weather_dict_or_none, error_or_none)."""
     service = WeatherService(settings.OPENWEATHER_API_KEY)
     try:
         weather_data = service.fetch_current_weather(city)
@@ -109,7 +145,6 @@ def fetch_weather_for_city(city):
 
 
 def fetch_forecast_for_city(city, metric='temperature'):
-    """Fetch 5-day forecast and extract daily max/min for selected metric."""
     service = WeatherService(settings.OPENWEATHER_API_KEY)
     try:
         forecast = service.fetch_forecast(city, metric)
@@ -118,7 +153,42 @@ def fetch_forecast_for_city(city, metric='temperature'):
         return None, str(exc)
 
 
-def hello_weather(request):
+def build_5_day_graph_context(forecast, error, card_instance_id):
+    if forecast:
+        return {
+            'forecast': forecast,
+            'metric': forecast['metric'],
+            'error': error,
+            'forecast_labels_json': json.dumps(forecast['labels']),
+            'forecast_max_json': json.dumps(forecast['max_values']),
+            'forecast_min_json': json.dumps(forecast['min_values']),
+            'forecast_detail_labels_json': json.dumps(forecast['detail_labels']),
+            'forecast_detail_max_json': json.dumps(forecast['detail_max_values']),
+            'forecast_detail_min_json': json.dumps(forecast['detail_min_values']),
+            'metric_label': forecast['metric_label'],
+            'metric_unit': forecast['unit'],
+            'helper_text': 'This chart shows daily or 6-hour weather trends depending on the card size.',
+            'card_instance_id': card_instance_id,
+        }
+
+    return {
+        'forecast': None,
+        'metric': 'temperature',
+        'error': error,
+        'forecast_labels_json': json.dumps(['00:00', '06:00', '12:00', '18:00']),
+        'forecast_max_json': json.dumps([0, 0, 0, 0]),
+        'forecast_min_json': json.dumps([0, 0, 0, 0]),
+        'forecast_detail_labels_json': json.dumps(['2026-05-25 00:00', '2026-05-25 06:00', '2026-05-25 12:00', '2026-05-25 18:00']),
+        'forecast_detail_max_json': json.dumps([0, 0, 0, 0]),
+        'forecast_detail_min_json': json.dumps([0, 0, 0, 0]),
+        'metric_label': 'Temperature',
+        'metric_unit': '°C',
+            'helper_text': 'This chart adapts to the card size and shows daily or 6-hour weather trends.',
+        'card_instance_id': card_instance_id,
+    }
+
+
+def weather_dashboard(request):
     weather = None
     error = None
 
@@ -127,11 +197,7 @@ def hello_weather(request):
         weather, error = fetch_weather_for_city(city)
 
     recent_searches = SearchHistory.objects.order_by('-searched_at')[:6]
-    stats = {
-        'search_count': SearchHistory.objects.count(),
-        'avg_temp': SearchHistory.objects.aggregate(avg=Avg('temperature'))['avg'],
-        'latest_city': recent_searches[0].city_name if recent_searches else None,
-    }
+    stats = build_stats_context()
 
     return render(request, "main/index.html", {
         'weather': weather,
@@ -166,10 +232,15 @@ def weather_widget(request):
         city = request.POST.get('city', '').strip()
         weather, error = fetch_weather_for_city(city)
 
-    return render(request, "main/partials/weather_result.html", {
+    response = render(request, "main/partials/weather_result.html", {
         'weather': weather,
         'error': error,
     })
+
+    if weather is not None and not error:
+        response.headers['HX-Trigger'] = 'recent-updated, stats-updated'
+
+    return response
 
 
 def recent_widget(request):
@@ -181,20 +252,60 @@ def recent_widget(request):
 
 
 def stats_widget(request):
-    recent_searches = SearchHistory.objects.order_by('-searched_at')[:1]
-    stats = {
-        'search_count': SearchHistory.objects.count(),
-        'avg_temp': SearchHistory.objects.aggregate(avg=Avg('temperature'))['avg'],
-        'latest_city': recent_searches[0].city_name if recent_searches else None,
-    }
+    stats = build_stats_context()
     return render(request, "main/partials/cards/stats.html", {
         'card': build_card('stats', 'stats-widget'),
         'stats': stats,
     })
 
 
+def alerts_widget(request):
+    service = AlertsService()
+    alerts = []
+    error = None
+
+    try:
+        alerts = [item.to_dict() for item in service.fetch_alerts(limit=8)]
+    except AlertsServiceError as exc:
+        error = str(exc)
+
+    return render(request, "main/partials/cards/alerts.html", {
+        'card': build_card('alerts', 'alerts-widget'),
+        'alerts': alerts,
+        'error': error,
+    })
+
+
+@require_GET
+@cache_page(60 * 5)
+def map_tile_proxy(request, layer, z, x, y):
+    """Proxy OpenWeather map tiles so API key stays on the server.
+
+    URL pattern: /widgets/map-tile/<layer>/<z>/<x>/<y>/?date=<unix>
+    """
+    api_key = settings.OPENWEATHER_API_KEY
+    date = request.GET.get('date')
+    base = f'https://maps.openweathermap.org/maps/2.0/weather/{layer}/{z}/{x}/{y}?appid={api_key}&opacity=0.65&fill_bound=true'
+    url = base + ('&date=' + date if date else '')
+
+    try:
+        resp = requests.get(url, stream=True, timeout=15)
+    except requests.RequestException:
+        return HttpResponseServerError()
+
+    if resp.status_code != 200:
+        return HttpResponse(status=resp.status_code)
+
+    content_type = resp.headers.get('Content-Type', 'image/png')
+    streaming = StreamingHttpResponse(resp.iter_content(chunk_size=8192), content_type=content_type)
+    streaming['Cache-Control'] = 'public, max-age=300'
+    if resp.headers.get('Content-Length'):
+        streaming['Content-Length'] = resp.headers.get('Content-Length')
+
+    return streaming
+
+
 def graph_widget(request):
-    """Fetch 5-day forecast and return max/min values for selected metric."""
     forecast = None
     error = None
     metric = 'temperature'
@@ -205,33 +316,9 @@ def graph_widget(request):
         metric = request.POST.get('metric', 'temperature').lower()
         forecast, error = fetch_forecast_for_city(city, metric)
 
-    if forecast:
-        forecast_labels_json = json.dumps(forecast['labels'])
-        forecast_max_json = json.dumps(forecast['max_values'])
-        forecast_min_json = json.dumps(forecast['min_values'])
-        metric_label = forecast['metric_label']
-        metric_unit = forecast['unit']
-        helper_text = None
-    else:
-        forecast_labels_json = json.dumps(['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'])
-        forecast_max_json = json.dumps([12, 14, 15, 13, 16])
-        forecast_min_json = json.dumps([7, 8, 9, 8, 10])
-        metric_label = 'Temperature'
-        metric_unit = '°C'
-        helper_text = 'Enter a city and fetch the 5-day forecast to see max and min lines for the selected metric.'
-
-    chart_data = {
-        'forecast': forecast,
-        'metric': metric,
-        'error': error,
-        'forecast_labels_json': forecast_labels_json,
-        'forecast_max_json': forecast_max_json,
-        'forecast_min_json': forecast_min_json,
-        'metric_label': metric_label,
-        'metric_unit': metric_unit,
-        'helper_text': helper_text,
-        'card_instance_id': card_instance_id,
-    }
+    chart_data = build_5_day_graph_context(forecast, error, card_instance_id)
 
     chart_data['fragment_only'] = True
     return render(request, "main/partials/cards/graph.html", chart_data)
+
+

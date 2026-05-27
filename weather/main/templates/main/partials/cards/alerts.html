@@ -1,0 +1,27 @@
+{% if error %}
+<p class="widget-note">Unable to load alerts right now: {{ error }}</p>
+{% elif alerts %}
+<div class="alerts-list" style="display: grid; gap: .5rem;">
+    {% for alert in alerts %}
+        <article class="alerts-item" style="border: 1px solid rgba(19, 41, 61, 0.14); border-radius: 12px; padding: .58rem .72rem; background: rgba(255, 255, 255, 0.72);">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap;">
+                <strong>{{ alert.event_type }} - {{ alert.country }}</strong>
+                <span style="font-size: .82rem; color: #6b7a87;">{{ alert.published_at }}</span>
+            </div>
+            <div style="margin-top: .2rem; color: #24455a;">{{ alert.title }}</div>
+            {% if alert.description %}
+                <div style="margin-top: .2rem; color: #6b7a87; font-size: .92rem;">{{ alert.description|truncatechars:180 }}</div>
+            {% endif %}
+            <div style="margin-top: .35rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;">
+                <span style="display: inline-flex; align-items: center; border-radius: 999px; padding: .12rem .5rem; font-size: .78rem; font-weight: 700; background: rgba(19, 41, 61, 0.08); color: #24455a;">{{ alert.source }}</span>
+                <span style="display: inline-flex; align-items: center; border-radius: 999px; padding: .12rem .5rem; font-size: .78rem; font-weight: 700; background: rgba(255, 122, 89, 0.12); color: #bc3908; text-transform: uppercase;">{{ alert.level }}</span>
+                {% if alert.link %}
+                    <a href="{{ alert.link }}" target="_blank" rel="noopener" style="font-size: .82rem; color: #1b998b; font-weight: 700; text-decoration: none;">Details</a>
+                {% endif %}
+            </div>
+        </article>
+    {% endfor %}
+</div>
+{% else %}
+<p class="widget-note">No active alerts found for Europe/CIS right now.</p>
+{% endif %}

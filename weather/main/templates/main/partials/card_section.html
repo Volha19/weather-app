@@ -2,7 +2,23 @@
     <h2>
         <span class="drag-handle" title="Drag to reorder">::</span>
         <span class="card-title">{{ card.title }}</span>
-        <button type="button" class="card-delete" data-remove-card aria-label="Remove card" title="Remove card">&times;</button>
+        <span class="card-actions">
+            {% if card.type == 'graph' %}
+                <button type="button" class="card-toggle" data-toggle-width aria-label="Expand card" title="Expand card"><i class="bi bi-arrows-expand-vertical"></i></button>
+            {% endif %}
+            {% if card.type == 'alerts' %}
+                <button
+                    type="button"
+                    class="card-toggle"
+                    hx-get="{% url 'alerts-widget' %}"
+                    hx-target="#alerts-widget-body-{{ card.instance_id }}"
+                    hx-swap="innerHTML"
+                    aria-label="Update alerts"
+                    title="Update alerts"
+                ><i class="bi bi-arrow-clockwise"></i></button>
+            {% endif %}
+            <button type="button" class="card-delete" data-remove-card aria-label="Remove card" title="Remove card">&times;</button>
+        </span>
     </h2>
     {% if card.type == 'weather' %}
         <form
@@ -13,8 +29,8 @@
             hx-swap="innerHTML"
         >
             {% csrf_token %}
-            <input type="text" name="city" placeholder="Type a city (e.g. Tokyo)" autocomplete="off">
-            <button type="submit">Fetch Weather</button>
+            <input type="text" name="city" placeholder="Enter a city, e.g. Tokyo" autocomplete="off">
+            <button type="submit">Show Weather</button>
         </form>
         <div id="weather-widget-body-{{ card.instance_id }}" class="widget-body">
             {% include 'main/partials/weather_result.html' %}
@@ -26,7 +42,7 @@
             id="stats-widget-body-{{ card.instance_id }}"
             class="widget-body"
             hx-get="{% url 'stats-widget' %}"
-            hx-trigger="load, every 20s"
+            hx-trigger="load, stats-updated from:body"
             hx-swap="innerHTML"
         >
             {% include 'main/partials/cards/stats.html' %}
@@ -38,10 +54,22 @@
             id="recent-widget-body-{{ card.instance_id }}"
             class="widget-body"
             hx-get="{% url 'recent-widget' %}"
-            hx-trigger="load, every 30s"
+            hx-trigger="load, recent-updated from:body"
             hx-swap="innerHTML"
         >
             {% include 'main/partials/cards/recent.html' %}
+        </div>
+
+    {% elif card.type == 'alerts' %}
+        <p class="widget-note">{{ card.note }}</p>
+        <div
+            id="alerts-widget-body-{{ card.instance_id }}"
+            class="widget-body"
+            hx-get="{% url 'alerts-widget' %}"
+            hx-trigger="load, every 24h"
+            hx-swap="innerHTML"
+        >
+            <p class="widget-note">Loading alerts...</p>
         </div>
 
     {% elif card.type == 'help' %}
@@ -51,5 +79,76 @@
 
     {% elif card.type == 'graph' %}
         {% include 'main/partials/cards/graph.html' with card=card graph_metrics=graph_metrics %}
+
+    {% elif card.type == 'map' %}
+        <p class="widget-note">Choose a layer to see temperature, humidity, clouds, pressure, or wind.</p>
+
+        <div class="weather-map-toolbar">
+            <label for="weather-map-layer-{{ card.instance_id }}">Layer</label>
+            <select id="weather-map-layer-{{ card.instance_id }}" data-weather-map-layer>
+                <option value="TA2">Temperature</option>
+                <option value="HRD0">Humidity</option>
+                <option value="CL">Cloudiness</option>
+                <option value="APM">Pressure</option>
+                <option value="WND">Wind</option>
+            </select>
+        </div>
+
+        <div
+            class="weather-map"
+            data-weather-map
+            data-layer="TA2"
+            data-time-offset="0"
+            data-instance-id="{{ card.instance_id }}"
+        ></div>
+
+        <div class="weather-map-controls-row">
+            <div class="weather-map-legend" data-weather-map-legend aria-live="polite"></div>
+
+            <div class="weather-map-toolbar weather-map-timebar" aria-label="Map time controls">
+                <h3 class="weather-map-timebar-title">Timeline of the map</h3>
+                <p class="weather-map-timebar-desc">Delay in hours from now (now = 0).</p>
+                <div class="weather-map-timeline" data-weather-map-timebar>
+                    <button type="button" data-weather-map-time="-24">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">-24h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="-18">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">-18h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="-12">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">-12h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="-6">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">-6h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="0" class="is-active">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">Now</span>
+                    </button>
+                    <button type="button" data-weather-map-time="6">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">+6h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="12">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">+12h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="18">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">+18h</span>
+                    </button>
+                    <button type="button" data-weather-map-time="24">
+                        <span class="weather-map-time-dot"></span>
+                        <span class="weather-map-time-label">+24h</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <p class="widget-note weather-map-caption">Live weather layers from OpenWeather.</p>
     {% endif %}
 </section>

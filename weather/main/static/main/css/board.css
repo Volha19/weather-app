@@ -94,6 +94,74 @@ body {
     gap: .45rem;
 }
 
+.card-title {
+    flex: 1;
+}
+
+.card-actions {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    flex: 0 0 auto;
+}
+
+.card-toggle {
+    all: unset !important;
+    position: static;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--muted);
+    background: rgba(0,0,0,0.06);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+}
+.card-toggle i {
+    font-size: 1.05rem;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+    color: currentColor;
+    transition: color .12s ease, transform .12s ease;
+}
+.card-toggle:hover i {
+    color: var(--ink);
+}
+.card-toggle.expanded i {
+    color: var(--ink);
+}
+
+/* Ensure arrows use the same muted/default and hover colors as the delete button */
+.card-actions .card-toggle,
+.card-actions .card-toggle i {
+    color: var(--muted) !important;
+}
+.card-actions .card-toggle:hover,
+.card-actions .card-toggle:hover i,
+.card-actions .card-toggle.expanded,
+.card-actions .card-toggle.expanded i {
+    color: var(--ink) !important;
+}
+
+.card-toggle:hover {
+    transform: scale(1.06);
+    background: rgba(0,0,0,0.09);
+}
+
+.card-toggle.expanded {
+    color: var(--ink);
+    background: rgba(0,0,0,0.10);
+}
+
+.card.card-expanded {
+    grid-column: 1 / -1;
+}
+
 .drag-handle {
     cursor: grab;
     color: #537086;
@@ -152,9 +220,7 @@ button:hover {
 
 button.card-delete {
     all: unset !important;
-    position: absolute !important;
-    right: 0 !important;
-    top: .1rem !important;
+    position: static !important;
     width: 1rem !important;
     height: 1rem !important;
     display: inline-flex !important;
@@ -243,6 +309,222 @@ select:focus {
     margin: .2rem 0;
 }
 
+.weather-map-toolbar {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin: .2rem 0 .8rem;
+    flex-wrap: wrap;
+}
+
+.weather-map-controls-row {
+    display: flex;
+    gap: .75rem;
+    margin: .85rem 0 .9rem;
+    align-items: stretch;
+}
+
+.weather-map-timebar {
+    align-items: stretch;
+    gap: .6rem;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    padding: .75rem .85rem;
+    border: 1px solid rgba(19, 41, 61, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.weather-map-timebar-desc {
+    margin: 0;
+    font-weight: 500; /* match legend's lighter description */
+    color: var(--muted);
+    line-height: 1.2;
+    font-size: .95rem;
+}
+
+.weather-map-timebar-title {
+    margin: 0 0 .25rem 0;
+    font-size: 1rem;
+    font-weight: 700; /* align with legend title weight */
+    color: var(--ink);
+}
+
+.weather-map-timeline {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: .25rem;
+    align-items: start;
+    padding-top: .25rem;
+    width: 100%;
+}
+
+.weather-map-timeline::before {
+    content: '';
+    position: absolute;
+    left: .8rem;
+    right: .8rem;
+    top: 1rem;
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(36, 69, 90, 0.18);
+}
+
+.weather-map-timeline button {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .38rem;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    padding: 0;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .2s ease, color .2s ease;
+}
+
+.weather-map-timebar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.weather-map-timeline button:hover {
+    transform: translateY(-1px);
+}
+
+.weather-map-time-dot {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 2px solid rgba(36, 69, 90, 0.38);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
+    transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.weather-map-time-label {
+    font-size: .82rem;
+    white-space: nowrap;
+}
+
+.weather-map-timeline button.is-active .weather-map-time-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(22, 117, 225, 0.14);
+}
+
+.weather-map-timeline button.is-active .weather-map-time-label {
+    color: var(--accent);
+}
+
+.weather-map-toolbar label {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.weather-map-toolbar select {
+    min-width: 170px;
+}
+
+.weather-map-legend {
+    display: grid;
+    gap: .55rem;
+    padding: .75rem .85rem;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    border: 1px solid rgba(19, 41, 61, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.weather-map-legend-title {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    flex-wrap: wrap;
+    font-weight: 700;
+}
+
+.weather-map-legend-unit {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.weather-map-legend-desc {
+    color: var(--muted);
+    font-size: .95rem;
+}
+
+.weather-map-legend-scale {
+    height: 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(19, 41, 61, 0.12);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.weather-map-legend-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    color: var(--muted);
+    font-size: .82rem;
+}
+
+.weather-map-legend-points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+    gap: .35rem;
+    color: var(--muted);
+    font-size: .76rem;
+}
+
+.weather-map-legend-points span {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.weather-map {
+    width: 100%;
+    height: min(58vh, 460px);
+    min-height: 300px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(19, 41, 61, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.weather-map-caption {
+    margin-top: .65rem;
+}
+
+.alerts-list {
+    /* About three alert cards visible before scroll appears */
+    max-height: 22rem;
+    overflow-y: auto;
+    padding-right: .2rem;
+}
+
+.alerts-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.alerts-list::-webkit-scrollbar-thumb {
+    background: rgba(19, 41, 61, 0.24);
+    border-radius: 999px;
+}
+
+.alerts-list::-webkit-scrollbar-track {
+    background: rgba(19, 41, 61, 0.06);
+    border-radius: 999px;
+}
+
 .span-8 {
     grid-column: span 12;
 }
@@ -252,6 +534,33 @@ select:focus {
 }
 
 .span-6 {
+    grid-column: span 12;
+}
+
+@media (max-width: 900px) {
+    .weather-map-controls-row {
+        flex-direction: column;
+    }
+
+    .weather-map-legend {
+        width: 100%;
+    }
+
+    .weather-map-timebar-label {
+        width: 100%;
+        padding-top: 0;
+    }
+
+    .weather-map-timeline {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .weather-map-timeline::before {
+        top: .95rem;
+    }
+}
+
+.span-12 {
     grid-column: span 12;
 }
 
@@ -287,5 +596,9 @@ select:focus {
 
     .span-6 {
         grid-column: span 6;
+    }
+
+    .span-12 {
+        grid-column: span 12;
     }
 }

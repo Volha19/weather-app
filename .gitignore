@@ -4,8 +4,10 @@ weather/.env
 
 # Python artifacts
 __pycache__/
-*.py[cod]
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
 # Django / local state
 weather/db.sqlite3

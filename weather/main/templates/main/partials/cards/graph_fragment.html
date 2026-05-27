@@ -1,0 +1,25 @@
+{% if error %}
+    <p class="error">{{ error }}</p>
+{% else %}
+    {% if helper_text %}
+        <p class="widget-note">{{ helper_text }}</p>
+    {% else %}
+        <p class="widget-note">Enter a city to see forecast lines for the selected weather metric.</p>
+    {% endif %}
+    <div
+        id="graph-data-{{ card_instance_id }}"
+        class="graph-data"
+        data-chart-type="forecast"
+        data-labels='{{ forecast_labels_json|escape }}'
+        data-max='{{ forecast_max_json|escape }}'
+        data-min='{{ forecast_min_json|escape }}'
+        data-detail-labels='{{ forecast_detail_labels_json|escape }}'
+        data-detail-max='{{ forecast_detail_max_json|escape }}'
+        data-detail-min='{{ forecast_detail_min_json|escape }}'
+        data-metric-label='{{ metric_label|escape }}'
+        data-metric-unit='{{ metric_unit|escape }}'
+        style="position: relative; height: 300px; width: 100%;"
+    >
+        <canvas id="weatherChart-{{ card_instance_id }}" class="weather-chart"></canvas>
+    </div>
+{% endif %}

@@ -6,8 +6,8 @@
     hx-swap="innerHTML"
 >
     {% csrf_token %}
-    <input type="text" name="city" placeholder="Type a city (e.g. Tokyo)" autocomplete="off">
-    <button type="submit">Fetch Weather</button>
+    <input type="text" name="city" placeholder="Enter a city, e.g. Tokyo" autocomplete="off">
+    <button type="submit">Show Weather</button>
 </form>
 <div id="weather-widget-body-{{ card.instance_id }}" class="widget-body">
     {% include 'main/partials/weather_result.html' %}
